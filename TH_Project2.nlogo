@@ -1,17 +1,17 @@
 globals [students schools]
 
 turtles-own [
-  preferences         ; seznam preferovaných škol (patchů)
-  score               ; skóre studenta
-  assigned-school     ; patch školy, kam je přiřazen
-  satisfaction        ; spokojenost studenta
+  preferences
+  score
+  assigned-school
+  satisfaction
 ]
 
 patches-own [
-  capacity            ; kapacita školy
-  requirements        ; minimální skóre pro přijetí
-  assigned-students   ; seznam přiřazených studentů
-  school-satisfaction ; spokojenost školy
+  capacity
+  requirements
+  assigned-students
+  school-satisfaction
 ]
 
 to setup
@@ -22,55 +22,73 @@ to setup
 end
 
 to setup-students
-  create-turtles 80 [
+  create-turtles num-students [
     set shape "person"
     set color blue
     set size 1.5
     setxy random-xcor random-ycor
-    set preferences n-values 3 [one-of patches]
+    set preferences n-of 3 schools
     set score random 100
     set assigned-school nobody
     set satisfaction 0
   ]
+  set students turtles
 end
 
 to setup-schools
   ask patches [
-    set capacity random 5 + 1
+    set pcolor white
+    set capacity 0
+    set requirements 0
+    set assigned-students []
+    set school-satisfaction 0
+  ]
+
+  let selected-patches n-of num-schools patches
+  ask selected-patches [
+    set capacity 1 + random school-max-capacity
     set requirements random 50
     set assigned-students []
     set school-satisfaction 0
-    set pcolor gray
+    set pcolor black
   ]
+  set schools selected-patches
 end
 
 to go
-  while [any? turtles with [assigned-school = nobody and length preferences > 0]] [
-    ask turtles with [assigned-school = nobody and length preferences > 0] [
-      let preferred-school first preferences
-      let school-patch preferred-school
-
-      ifelse ((length [assigned-students] of school-patch) < [capacity] of school-patch) and
-             ([score] of self >= [requirements] of school-patch) [
-        set assigned-school school-patch
-        ask school-patch [
-          set assigned-students lput myself assigned-students
-        ]
-      ] [
-        set preferences remove preferred-school preferences
-      ]
-    ]
-  ]
+  assign-students
   calculate-satisfaction
   move-students
   color-schools
   tick
 end
 
+to assign-students
+  let unassigned-students [self] of turtles with [assigned-school = nobody]
+
+  foreach unassigned-students [
+    [student] ->
+      ask student [
+        let preferences-of-student [self] of preferences
+        foreach preferences-of-student [
+          [preferred-school] ->
+            if ([capacity] of preferred-school > length [assigned-students] of preferred-school) and
+               (score >= [requirements] of preferred-school) [
+
+              set assigned-school preferred-school
+              ask preferred-school [
+                set assigned-students lput myself assigned-students
+              ]
+              stop
+            ]
+        ]
+      ]
+  ]
+end
+
 to calculate-satisfaction
   ask turtles [
-    set satisfaction (3 - length preferences) * 10
-    set color scale-color green satisfaction 0 30
+    set satisfaction (3 - length [self] of preferences) * 10
   ]
   ask patches [
     set school-satisfaction length assigned-students * 10
@@ -87,15 +105,8 @@ to move-students
 end
 
 to color-schools
-  ask patches [
-    ifelse capacity > 0 [
-      let fill-ratio (length assigned-students) / capacity
-      set pcolor scale-color red fill-ratio 0 1
-    ][
-      set pcolor gray
-    ]
-  ]
-  ask patches [
+  ask schools [
+    set pcolor black
     ifelse length assigned-students > 0 [
       set plabel length assigned-students
     ][
@@ -111,11 +122,11 @@ end
 GRAPHICS-WINDOW
 468
 10
-905
-448
+901
+444
 -1
 -1
-13.0
+12.9
 1
 10
 1
@@ -185,6 +196,51 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+137
+280
+309
+313
+num-students
+num-students
+1
+500
+284.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+138
+324
+310
+357
+num-schools
+num-schools
+1
+100
+45.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+143
+380
+315
+413
+school-max-capacity
+school-max-capacity
+1
+20
+20.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
