@@ -107,11 +107,6 @@ end
 to color-schools
   ask schools [
     set pcolor black
-    ifelse length assigned-students > 0 [
-      set plabel length assigned-students
-    ][
-      set plabel ""
-    ]
   ]
 end
 
@@ -206,7 +201,7 @@ num-students
 num-students
 1
 500
-284.0
+500.0
 1
 1
 NIL
