@@ -1,4 +1,4 @@
-globals [students schools]
+globals [students schools students-with-school students-without-school]
 
 turtles-own [
   preferences
@@ -60,6 +60,9 @@ to go
   calculate-satisfaction
   move-students
   color-schools
+  update-monitors
+  update-score-histogram
+  calculate-preference-satisfaction
   tick
 end
 
@@ -103,14 +106,18 @@ to calculate-satisfaction
     ]
   ]
   ask patches [
-    let total-score 0
+    let total-satisfaction 0
     let total-students length assigned-students
+    let total-score 0
     foreach assigned-students [
       [student] ->
+        set total-satisfaction total-satisfaction + [satisfaction] of student
         set total-score total-score + [score] of student
     ]
     ifelse total-students > 0 [
-      set school-satisfaction (total-score / total-students)
+      let capacity-factor (total-students / capacity) * 100
+      let score-factor (total-score / total-students)
+      set school-satisfaction (capacity-factor + score-factor) / 2
     ] [
       set school-satisfaction 0
     ]
@@ -134,6 +141,55 @@ end
 
 to-report current-matches
   report [assigned-school] of turtles
+end
+
+to calculate-preference-satisfaction
+  let first-choice-count 0
+  let second-choice-count 0
+  let third-choice-count 0
+  let no-choice-count 0
+
+  ask turtles [
+    let sorted-preferences sort preferences
+    if assigned-school = item 0 sorted-preferences [
+      set first-choice-count first-choice-count + 1
+    ]
+    if assigned-school = item 1 sorted-preferences [
+      set second-choice-count second-choice-count + 1
+    ]
+    if assigned-school = item 2 sorted-preferences [
+      set third-choice-count third-choice-count + 1
+    ]
+    if assigned-school = nobody [
+      set no-choice-count no-choice-count + 1
+    ]
+  ]
+
+  clear-plot
+  set-current-plot "Preference Satisfaction"
+  set-current-plot-pen "First Choice"
+  plotxy 1 first-choice-count
+  set-current-plot-pen "Second Choice"
+  plotxy 2 second-choice-count
+  set-current-plot-pen "Third Choice"
+  plotxy 3 third-choice-count
+  set-current-plot-pen "No Choice"
+  plotxy 4 no-choice-count
+end
+
+to update-monitors
+  set students-with-school count turtles with [assigned-school != nobody]
+  set students-without-school count turtles with [assigned-school = nobody]
+end
+
+to update-score-histogram
+  let score-intervals [0 10 20 30 40 50 60 70 80 90 100]
+  clear-plot
+  set-current-plot "Student Scores"
+  foreach score-intervals [
+    [interval] ->
+      plotxy interval count turtles with [score >= interval and score < interval + 10]
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -223,7 +279,7 @@ num-students
 num-students
 1
 200
-64.0
+126.0
 1
 1
 NIL
@@ -237,8 +293,8 @@ SLIDER
 num-schools
 num-schools
 1
-30
-14.0
+15
+9.0
 1
 1
 NIL
@@ -252,8 +308,8 @@ SLIDER
 school-max-capacity
 school-max-capacity
 1
-20
-4.0
+30
+30.0
 1
 1
 NIL
@@ -278,11 +334,11 @@ PENS
 "default" 1.0 1 -13791810 false "" "plot count turtles"
 
 PLOT
-920
-336
-1625
-607
-plot 1
+921
+338
+1282
+561
+Preference Satisfaction
 NIL
 NIL
 0.0
@@ -290,10 +346,53 @@ NIL
 0.0
 10.0
 true
-false
-"set-plot-x-range 0 100\nset-plot-y-range 0 num-schools" "clear-plot\nlet satisfaction-levels [0 10 20 30 40 50 60 70 80 90 100]\nforeach satisfaction-levels [\n  [level] ->\n    plotxy level count patches with [school-satisfaction = level]\n]"
+true
+"" ""
 PENS
-"default" 1.0 1 -16777216 true "" "plot count turtles"
+"First Choice" 1.0 1 -13840069 true "" ""
+"Second Choice" 1.0 1 -1184463 true "" ""
+"Third Choice" 1.0 1 -2674135 true "" ""
+"No Choice" 1.0 1 -16448764 true "" ""
+
+MONITOR
+1296
+341
+1427
+386
+Students with School
+students-with-school
+17
+1
+11
+
+MONITOR
+1454
+339
+1601
+384
+Students without School
+students-without-school
+17
+1
+11
+
+PLOT
+921
+568
+1611
+782
+Student Scores
+NIL
+NIL
+0.0
+100.0
+0.0
+30.0
+false
+false
+"" ""
+PENS
+"Scores" 1.0 1 -14454117 true "" "update-score-histogram"
 
 @#$#@#$#@
 ## WHAT IS IT?
