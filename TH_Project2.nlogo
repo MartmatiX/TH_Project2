@@ -88,10 +88,32 @@ end
 
 to calculate-satisfaction
   ask turtles [
-    set satisfaction (3 - length [self] of preferences) * 10
+    let sorted-preferences sort preferences
+    if assigned-school = item 0 sorted-preferences [
+      set satisfaction 100
+    ]
+    if assigned-school = item 1 sorted-preferences [
+      set satisfaction 70
+    ]
+    if assigned-school = item 2 sorted-preferences [
+      set satisfaction 40
+    ]
+    if assigned-school = nobody [
+      set satisfaction 0
+    ]
   ]
   ask patches [
-    set school-satisfaction length assigned-students * 10
+    let total-score 0
+    let total-students length assigned-students
+    foreach assigned-students [
+      [student] ->
+        set total-score total-score + [score] of student
+    ]
+    ifelse total-students > 0 [
+      set school-satisfaction (total-score / total-students)
+    ] [
+      set school-satisfaction 0
+    ]
   ]
 end
 
@@ -200,8 +222,8 @@ SLIDER
 num-students
 num-students
 1
-500
-500.0
+200
+64.0
 1
 1
 NIL
@@ -215,8 +237,8 @@ SLIDER
 num-schools
 num-schools
 1
-100
-45.0
+30
+14.0
 1
 1
 NIL
@@ -231,11 +253,47 @@ school-max-capacity
 school-max-capacity
 1
 20
-20.0
+4.0
 1
 1
 NIL
 HORIZONTAL
+
+PLOT
+920
+26
+1612
+328
+Student satisfaction
+NIL
+NIL
+0.0
+100.92
+0.0
+60.0
+false
+false
+"" "clear-plot\nlet satisfaction-levels [0 40 70 100]\nforeach satisfaction-levels [\n  [level] ->\n    plotxy level count turtles with [satisfaction = level]\n]"
+PENS
+"default" 1.0 1 -13791810 false "" "plot count turtles"
+
+PLOT
+920
+336
+1625
+607
+plot 1
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"set-plot-x-range 0 100\nset-plot-y-range 0 num-schools" "clear-plot\nlet satisfaction-levels [0 10 20 30 40 50 60 70 80 90 100]\nforeach satisfaction-levels [\n  [level] ->\n    plotxy level count patches with [school-satisfaction = level]\n]"
+PENS
+"default" 1.0 1 -16777216 true "" "plot count turtles"
 
 @#$#@#$#@
 ## WHAT IS IT?
