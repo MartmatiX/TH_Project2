@@ -71,7 +71,6 @@ to go
   color-schools
   update-monitors
   update-score-histogram
-  update-school-satisfaction-histogram
   calculate-preference-satisfaction
   tick
 end
@@ -123,8 +122,10 @@ to calculate-satisfaction
 
     foreach assigned-students [
       [student] ->
-        set total-satisfaction total-satisfaction + [satisfaction] of student
-        set total-score total-score + [score] of student
+      ask student [
+        set total-satisfaction total-satisfaction + satisfaction
+        set total-score total-score + score
+      ]
     ]
 
     ifelse total-students > 0 [
@@ -223,21 +224,6 @@ to update-score-histogram
       plotxy interval count turtles with [score >= interval and score < interval + 10]
   ]
 end
-
-to update-school-satisfaction-histogram
-  let satisfaction-intervals [0 10 20 30 40 50 60 70 80 90 100]
-  clear-plot
-  set-current-plot "School Satisfaction"
-  set-current-plot-pen "Schools"
-
-  foreach satisfaction-intervals [
-    [interval] ->
-      let count-in-bin count schools with [
-        school-satisfaction >= interval and school-satisfaction < (interval + 10)
-      ]
-      plotxy interval count-in-bin
-  ]
-end
 @#$#@#$#@
 GRAPHICS-WINDOW
 468
@@ -326,7 +312,7 @@ num-students
 num-students
 1
 200
-200.0
+100.0
 1
 1
 NIL
@@ -341,7 +327,7 @@ num-schools
 num-schools
 1
 15
-15.0
+10.0
 1
 1
 NIL
@@ -356,7 +342,7 @@ school-max-capacity
 school-max-capacity
 1
 30
-30.0
+1.0
 1
 1
 NIL
@@ -440,24 +426,6 @@ false
 "" ""
 PENS
 "Scores" 1.0 1 -14454117 true "" "update-score-histogram"
-
-PLOT
-307
-483
-913
-783
-School Satisfaction
-NIL
-NIL
-0.0
-20.0
-0.0
-20.0
-true
-false
-"" ""
-PENS
-"Schools" 1.0 1 -16777216 true "" "plot count turtles"
 
 MONITOR
 1385
