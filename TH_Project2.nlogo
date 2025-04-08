@@ -1,4 +1,13 @@
-globals [students schools students-with-school students-without-school]
+globals [
+  students
+  schools
+  students-with-school
+  students-without-school
+  first-choice-count
+  second-choice-count
+  third-choice-count
+]
+
 
 turtles-own [
   preferences
@@ -62,6 +71,7 @@ to go
   color-schools
   update-monitors
   update-score-histogram
+  update-school-satisfaction-histogram
   calculate-preference-satisfaction
   tick
 end
@@ -105,18 +115,21 @@ to calculate-satisfaction
       set satisfaction 0
     ]
   ]
-  ask patches [
+
+  ask schools [
     let total-satisfaction 0
-    let total-students length assigned-students
     let total-score 0
+    let total-students length assigned-students
+
     foreach assigned-students [
       [student] ->
         set total-satisfaction total-satisfaction + [satisfaction] of student
         set total-score total-score + [score] of student
     ]
+
     ifelse total-students > 0 [
       let capacity-factor (total-students / capacity) * 100
-      let score-factor (total-score / total-students)
+      let score-factor (total-satisfaction / total-students)
       set school-satisfaction (capacity-factor + score-factor) / 2
     ] [
       set school-satisfaction 0
@@ -144,9 +157,10 @@ to-report current-matches
 end
 
 to calculate-preference-satisfaction
-  let first-choice-count 0
-  let second-choice-count 0
-  let third-choice-count 0
+  set first-choice-count 0
+  set second-choice-count 0
+  set third-choice-count 0
+
   let no-choice-count 0
 
   ask turtles [
@@ -180,7 +194,25 @@ end
 to update-monitors
   set students-with-school count turtles with [assigned-school != nobody]
   set students-without-school count turtles with [assigned-school = nobody]
+
+  set first-choice-count 0
+  set second-choice-count 0
+  set third-choice-count 0
+
+  ask turtles [
+    let sorted-preferences sort preferences
+    if assigned-school = item 0 sorted-preferences [
+      set first-choice-count first-choice-count + 1
+    ]
+    if assigned-school = item 1 sorted-preferences [
+      set second-choice-count second-choice-count + 1
+    ]
+    if assigned-school = item 2 sorted-preferences [
+      set third-choice-count third-choice-count + 1
+    ]
+  ]
 end
+
 
 to update-score-histogram
   let score-intervals [0 10 20 30 40 50 60 70 80 90 100]
@@ -189,6 +221,21 @@ to update-score-histogram
   foreach score-intervals [
     [interval] ->
       plotxy interval count turtles with [score >= interval and score < interval + 10]
+  ]
+end
+
+to update-school-satisfaction-histogram
+  let satisfaction-intervals [0 10 20 30 40 50 60 70 80 90 100]
+  clear-plot
+  set-current-plot "School Satisfaction"
+  set-current-plot-pen "Schools"
+
+  foreach satisfaction-intervals [
+    [interval] ->
+      let count-in-bin count schools with [
+        school-satisfaction >= interval and school-satisfaction < (interval + 10)
+      ]
+      plotxy interval count-in-bin
   ]
 end
 @#$#@#$#@
@@ -279,7 +326,7 @@ num-students
 num-students
 1
 200
-126.0
+200.0
 1
 1
 NIL
@@ -294,7 +341,7 @@ num-schools
 num-schools
 1
 15
-9.0
+15.0
 1
 1
 NIL
@@ -393,6 +440,57 @@ false
 "" ""
 PENS
 "Scores" 1.0 1 -14454117 true "" "update-score-histogram"
+
+PLOT
+307
+483
+913
+783
+School Satisfaction
+NIL
+NIL
+0.0
+20.0
+0.0
+20.0
+true
+false
+"" ""
+PENS
+"Schools" 1.0 1 -16777216 true "" "plot count turtles"
+
+MONITOR
+1385
+407
+1516
+452
+First Choice Students
+first-choice-count
+17
+1
+11
+
+MONITOR
+1385
+460
+1532
+505
+Second Choice Students
+second-choice-count
+17
+1
+11
+
+MONITOR
+1386
+509
+1520
+554
+Third Choice Students
+third-choice-count
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
